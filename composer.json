@@ -1,0 +1,20 @@
+{
+    "name": "qbhy/swoole-parallel",
+    "authors": [
+        {
+            "name": "qbhy",
+            "email": "96qbhy@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Qbhy\\SwooleParallel\\": "src/"
+        }
+    },
+    "require-dev": {
+        "swoole/ide-helper": "^4.5"
+    }
+}
