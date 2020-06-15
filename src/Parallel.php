@@ -20,21 +20,37 @@ class Parallel
     /**
      * @var callable[]
      */
-    private $callbacks = [];
+    protected $callbacks = [];
 
     /**
      * @var null|Channel
      */
-    private $concurrentChannel;
+    protected $concurrentChannel;
 
     /**
-     * @param int $concurrent if $concurrent is equal to 0, that means unlimit
+     * @var callable
+     */
+    protected $caller;
+
+    /**
+     * @param  int  $concurrent  if $concurrent is equal to 0, that means unlimit
      */
     public function __construct(int $concurrent = 0)
     {
         if ($concurrent > 0) {
             $this->concurrentChannel = new Channel($concurrent);
         }
+    }
+
+    /**
+     * @param  callable  $caller
+     * @return $this
+     */
+    public function setCaller(callable $caller)
+    {
+        $this->caller = $caller;
+
+        return $this;
     }
 
     public function add(callable $callable, $key = null)
@@ -55,7 +71,8 @@ class Parallel
             $this->concurrentChannel && $this->concurrentChannel->push(true);
             SwooleCoroutine::create(function () use ($callback, $key, $wg, &$result, &$throwables) {
                 try {
-                    $result[$key] = $callback();
+                    $result[$key] = is_callable($this->caller) ? call_user_func_array($this->caller,
+                        [$callback]) : $callback();
                 } catch (\Throwable $throwable) {
                     $throwables[$key] = $throwable;
                 } finally {
@@ -66,7 +83,7 @@ class Parallel
         }
         $wg->wait();
         if ($throw && ($throwableCount = count($throwables)) > 0) {
-            $message = 'Detecting ' . $throwableCount . ' throwable occurred during parallel execution:' . PHP_EOL . $this->formatThrowables($throwables);
+            $message = 'Detecting '.$throwableCount.' throwable occurred during parallel execution:'.PHP_EOL.$this->formatThrowables($throwables);
             $executionException = new ParallelExecutionException($message);
             $executionException->setResults($result);
             $executionException->setThrowables($throwables);
@@ -84,14 +101,14 @@ class Parallel
     /**
      * Format throwables into a nice list.
      *
-     * @param \Throwable[] $throwables
+     * @param  \Throwable[]  $throwables
      */
     private function formatThrowables(array $throwables): string
     {
         $output = '';
         foreach ($throwables as $key => $value) {
             $output .= \sprintf(
-                '(%s) %s: %s' . PHP_EOL . '%s' . PHP_EOL,
+                '(%s) %s: %s'.PHP_EOL.'%s'.PHP_EOL,
                 $key,
                 get_class($value),
                 $value->getMessage(),
