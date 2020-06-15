@@ -15,6 +15,10 @@ require __DIR__ . 'vendor/autoload.php';
     $time = time();
     $parallel = new \Qbhy\SwooleParallel\Parallel(20);
 
+//    $parallel->setCaller(function ($callback) {
+//        return app()->call($callback); // laravel 内可以这样实现协程内依赖注入
+//    });
+
     for ($i = 0; $i < 5; ++$i) {
         $parallel->add(function () use ($i) {
             \Swoole\Coroutine::sleep(1);
