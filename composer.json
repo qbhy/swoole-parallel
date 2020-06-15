@@ -8,7 +8,7 @@
     ],
     "require": {
         "php": ">=7.2",
-        "swoole": ">=4.4"
+        "ext-swoole": ">=4.4"
     },
     "autoload": {
         "psr-4": {
